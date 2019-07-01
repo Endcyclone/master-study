@@ -74,12 +74,12 @@ def sines(data, rate):
 #視覚情報を聴覚情報に
 class eye_to_ear:
     def __init__(self, mapname):
-        try:
-            f = open(mapname, 'r')
-            self.mapdata = json.load(f)
-        except:
-            print("error: wrong mapname")
-            sys.exit()
+#        try:
+        f = open(mapname, 'r')
+        self.mapdata = json.load(f)
+#        except:
+#            print("error: wrong mapname")
+#            sys.exit()
         f.close()
         return
     
@@ -129,7 +129,7 @@ class eye_to_ear:
 
     def set_deg(self, deg):
         self.deg = (deg + 360) % 360
-        print("now_deg =", deg)
+        print("now_deg =", self.deg)
         
     def set_ele(self, ele):
         if ele < 0 or 180 <= ele:
@@ -213,9 +213,9 @@ def on_press(key):
     print("pressed")
     try:
         if key.char == "w" : ka.move(0)
-        if key.char == "a" : ka.move(90)
+        if key.char == "a" : ka.move(-90)
         if key.char == "s" : ka.move(180)
-        if key.char == "d" : ka.move(-90)
+        if key.char == "d" : ka.move(90)
     except AttributeError:
         if key == Key.up: ka.lookUp()
         if key == Key.down: ka.lookDown()
@@ -241,24 +241,24 @@ class key_animation:
         self.ani = matplotlib.animation.FuncAnimation(self.fig, self.updatefig, interval=500)
     def updatefig(self, i):
         plt.clf()
-        self.figdata = ete.scan_square()
+        self.figdata = ete.scan_square(step=1)
         plt.imshow(self.figdata, cmap="binary")
-        plt.clim(vmin=0, vmax=5)
+        plt.clim(vmin=0, vmax=2)
         plt.colorbar()
     def move(self, exdir):
         deg = self.ete.get_deg() + exdir
-        div = np.array([int(10*np.sin(np.pi*deg/180)), int(10*np.cos(np.pi*deg/180)), 0])
+        div = np.array([int(1*np.sin(np.pi*deg/180)), int(-1*np.cos(np.pi*deg/180)), 0])
         pos = self.ete.get_pos() + div
         if not self.ete.is_collision(pos):
             self.ete.set_pos(pos[0], pos[1], pos[2])
     def lookUp(self):
-        self.ete.set_ele(self.ete.get_ele()+10)
+        self.ete.set_ele(self.ete.get_ele()+15)
     def lookDown(self):
-        self.ete.set_ele(self.ete.get_ele()-10)
+        self.ete.set_ele(self.ete.get_ele()-15)
     def lookRight(self):
-        self.ete.set_deg(self.ete.get_deg()+30)
+        self.ete.set_deg(self.ete.get_deg()+15)
     def lookLeft(self):
-        self.ete.set_deg(self.ete.get_deg()-30)
+        self.ete.set_deg(self.ete.get_deg()-15)
     def animate(self):
         plt.show()
         return self
@@ -270,8 +270,8 @@ class key_animation:
 # get_ipython().run_line_magic('matplotlib', 'nbagg')
 # キー入力でグラフを変化させる
 
-ete = eye_to_ear("station_platform.json")
-ete.set_pos(5,50,2)
+ete = eye_to_ear("box.json")
+ete.set_pos(5,5,1)
 ete.set_angle(90,90)
 ete.calc_height()
 #scandata = ete.scan_square()
