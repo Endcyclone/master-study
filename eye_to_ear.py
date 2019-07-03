@@ -241,7 +241,7 @@ class key_animation:
         self.ani = matplotlib.animation.FuncAnimation(self.fig, self.updatefig, interval=500)
     def updatefig(self, i):
         plt.clf()
-        self.figdata = ete.scan_square(step=1)
+        self.figdata = ete.scan_square(step=5)
         plt.imshow(self.figdata, cmap="binary")
         plt.clim(vmin=0, vmax=2)
         plt.colorbar()
