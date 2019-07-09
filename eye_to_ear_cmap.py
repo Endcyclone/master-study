@@ -272,19 +272,19 @@ class key_animation:
 
 ete = eye_to_ear("box.json")
 ete.set_pos(5,5,1)
-ete.set_angle(90,90)
+ete.set_angle(135,90)
 ete.calc_height()
 #scandata = ete.scan_square()
 
 ka = key_animation(ete)
 
-def key_listener():
-    try:
-        with Listener(on_press=on_press, on_release=on_release) as listener:
-            listener.join()
-    except:
-        pass
+#def key_listener():
+#    try:
+#        with Listener(on_press=on_press, on_release=on_release) as listener:
+#            listener.join()
+#    except:
+#        pass
 
-key_thread = threading.Thread(target=key_listener)
-key_thread.start()
+#key_thread = threading.Thread(target=key_listener)
+#key_thread.start()
 ka.animate()
