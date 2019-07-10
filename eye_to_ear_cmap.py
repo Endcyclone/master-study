@@ -238,11 +238,12 @@ class key_animation:
         self.data = ete.scan_square()
         self.fig = plt.figure()
         self.ax = plt.axes()
-        self.ani = matplotlib.animation.FuncAnimation(self.fig, self.updatefig, interval=1000)
-    def updatefig(self, i):
+        #self.updatefig(0)
+        #self.ani = matplotlib.animation.FuncAnimation(self.fig, self.updatefig, interval=1000)
+    def updatefig(self, c, s):
         plt.clf()
-        self.figdata = ete.scan_square(step=3)
-        plt.imshow(self.figdata, cmap="binary")
+        self.figdata = ete.scan_square(step=s)
+        plt.imshow(self.figdata, cmap=c)
         plt.clim(vmin=1, vmax=2)
         plt.colorbar()
     def move(self, exdir):
@@ -262,7 +263,9 @@ class key_animation:
     def animate(self):
         plt.show()
         return self
-
+    def save(self, str):
+        self.fig.savefig(str+'.png')
+        return
 
 # In[14]:
 
@@ -270,13 +273,18 @@ class key_animation:
 # get_ipython().run_line_magic('matplotlib', 'nbagg')
 # キー入力でグラフを変化させる
 
-ete = eye_to_ear("box.json")
-ete.set_pos(5,5,1)
-ete.set_angle(135,90)
-ete.calc_height()
-#scandata = ete.scan_square()
+#cmaps = ["inferno_r", "magma_r", "hot_r", "afmhot_r"]
+cmaps = ["Blues","bone_r"]
+steps = [1, 3, 5]
 
-ka = key_animation(ete)
+for c in cmaps:
+    for s in steps:
+        ete = eye_to_ear("box.json")
+        ete.set_pos(5,5,1)
+        ete.set_angle(135,90)
+        ete.calc_height()
+        #scandata = ete.scan_square()
+        ka = key_animation(ete)
 
 #def key_listener():
 #    try:
@@ -287,4 +295,6 @@ ka = key_animation(ete)
 
 #key_thread = threading.Thread(target=key_listener)
 #key_thread.start()
-ka.animate()
+        ka.updatefig(c, s)
+        ka.animate()
+        ka.save('Figure_'+c+'_'+str(s))
