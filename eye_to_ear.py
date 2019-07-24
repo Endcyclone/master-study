@@ -241,8 +241,8 @@ class key_animation:
         self.ani = matplotlib.animation.FuncAnimation(self.fig, self.updatefig, interval=1000)
     def updatefig(self, i):
         plt.clf()
-        self.figdata = ete.scan_square(step=3)
-        plt.imshow(self.figdata, cmap="binary")
+        self.figdata = ete.scan_square(step=1)
+        plt.imshow(self.figdata, cmap="magma_r")
         plt.clim(vmin=1, vmax=2)
         plt.colorbar()
     def move(self, exdir):
@@ -270,8 +270,8 @@ class key_animation:
 # get_ipython().run_line_magic('matplotlib', 'nbagg')
 # キー入力でグラフを変化させる
 
-ete = eye_to_ear("box.json")
-ete.set_pos(5,5,1)
+ete = eye_to_ear("table in box.json")
+ete.set_pos(1,1,2)
 ete.set_angle(90,90)
 ete.calc_height()
 #scandata = ete.scan_square()
