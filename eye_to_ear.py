@@ -16,6 +16,7 @@ import pyaudio
 import os
 from pynput.keyboard import Key, Listener
 import threading
+from time import sleep
 
 
 # In[4]:
@@ -29,31 +30,6 @@ def pltplot(data):
     x = range(len(data))
     plt.plot(x, data)
     plt.show()
-
-
-# In[5]:
-
-
-#オーディオ鳴らす
-def play_tone(stream, data, frequency=440, length=1, rate=44100):
-    chunks = []
-    chunks.append(sines(data, rate))
-    chunk = np.concatenate(chunks) * 0.1
-    #pltplot(chunk)
-    stream.write(chunk.astype(np.float32).tostring())
-
-
-# In[6]:
-
-
-#指定周波数でサイン波を生成する
-def sine(frequency, length, rate):
-    length = int(length * rate)
-    factor = float(frequency) * (np.pi * 2) / rate
-    return np.sin(np.arange(length) * factor)
-
-
-# In[7]:
 
 
 #連続サイン波を生成する
@@ -223,6 +199,8 @@ def on_press(key):
         if key == Key.right: ka.lookRight()
         if key == Key.esc:
             print('キー受け付けを終了しました')
+            ka.drawing = False
+            ps.playing = False
             return False
         
 def on_release(key):
@@ -235,48 +213,88 @@ def on_release(key):
 class key_animation:
     def __init__(self, ete):
         self.ete = ete
-        self.data = ete.scan_square()
-        self.fig = plt.figure()
-        self.ax = plt.axes()
-        self.ani = matplotlib.animation.FuncAnimation(self.fig, self.updatefig, interval=1000)
-    def updatefig(self, i):
-        plt.clf()
-        self.figdata = ete.scan_square(step=5)
-        plt.imshow(self.figdata, cmap="magma_r")
-        plt.clim(vmin=1, vmax=2)
-        plt.colorbar()
+        self.fig, self.ax = plt.subplots(1,1)
+        self.updatefig()
+        self.graph = self.ax.imshow(self.figdata, cmap="magma_r")
+        self.graph.set_clim(vmin=1, vmax=2)
+        plt.colorbar(self.graph)
+        self.drawing = True
+
+    def updatefig(self):
+        self.ax.clear()
+        self.figdata = ete.scan_square(step=1)
+        ps.level = self.figdata[int(self.figdata.shape[0] / 2), int(self.figdata.shape[0] / 2)]
+        print(ps.level)
+
     def move(self, exdir):
         deg = self.ete.get_deg() + exdir
         div = np.array([int(1*np.sin(np.pi*deg/180)), int(-1*np.cos(np.pi*deg/180)), 0])
         pos = self.ete.get_pos() + div
         if not self.ete.is_collision(pos):
             self.ete.set_pos(pos[0], pos[1], pos[2])
+        self.updatefig()
     def lookUp(self):
         self.ete.set_ele(self.ete.get_ele()+15)
+        self.updatefig()
     def lookDown(self):
         self.ete.set_ele(self.ete.get_ele()-15)
+        self.updatefig()
     def lookRight(self):
         self.ete.set_deg(self.ete.get_deg()+15)
+        self.updatefig()
     def lookLeft(self):
         self.ete.set_deg(self.ete.get_deg()-15)
+        self.updatefig()
     def animate(self):
-        plt.show()
-        return self
-
+        prev = 0
+        self.ax.imshow(self.figdata, cmap="magma_r")
+        while self.drawing:
+            if (prev == self.figdata).all():
+                plt.pause(.1)
+                continue
+            self.ax.imshow(self.figdata, cmap="magma_r")
+            plt.pause(.1)
+            prev = self.figdata
 
 # In[14]:
 
+# オーディオプレーヤー
+class play_sound:
+	def __init__(self):
+		self.p = pyaudio.PyAudio()
+		self.stream = self.p.open(format=pyaudio.paFloat32, channels=1, rate=44100, output=1)
+		self.level = -1
+		self.playing = True
 
-# get_ipython().run_line_magic('matplotlib', 'nbagg')
-# キー入力でグラフを変化させる
+	def generate_tone(self, frequency, length, rate):
+		length = int(length * rate)
+		factor = float(frequency) * (np.pi * 2) / rate
+		return np.sin(np.arange(length) * factor)
 
+	def play(self):
+		while self.playing:
+			chunks = []
+			if self.level < 0:
+				sleep(1)
+				continue
+			chunks.append(self.generate_tone(600 - self.level * 200, 0.5, 44100))
+			chunk = np.concatenate(chunks) * 0.1
+			self.stream.write(chunk.astype(np.float32).tostring())
+			sleep(0.5)
+
+		self.stream.close()
+		self.p.terminate()
+
+
+
+############### メインスレッド ###############
+
+ps = play_sound()
 ete = eye_to_ear("table in box.json")
 ete.set_pos(1,1,2)
 ete.set_angle(90,90)
 ete.calc_height()
 #scandata = ete.scan_square()
-
-ka = key_animation(ete)
 
 def key_listener():
     try:
@@ -287,4 +305,9 @@ def key_listener():
 
 key_thread = threading.Thread(target=key_listener)
 key_thread.start()
+
+ps_thread = threading.Thread(target=ps.play)
+ps_thread.start()
+
+ka = key_animation(ete)
 ka.animate()
