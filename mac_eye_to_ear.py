@@ -1,4 +1,4 @@
-﻿import numpy as np
+import numpy as np
 import pandas as pd
 import sys
 import matplotlib
@@ -161,6 +161,7 @@ def on_press(key):
         if key == Key.esc:
             print('キー受け付けを終了しました')
             ka.drawing = False
+            ka.update_event.set()
             ps.playing = False
             return False
 
@@ -172,16 +173,19 @@ class key_animation:
         self.ete = ete
         self.step = step
         self.fig, self.ax = plt.subplots(1,1)
+        self.update_event = threading.Event()
         self.updatefig()
         self.drawing = True
-        self.updating = False
+        #self.updating = False
 
     def updatefig(self):
-        self.updating = True
+        #self.updating = True
         self.figdata = self.ete.scan_square(step=self.step)
         ps.level = self.figdata[int(self.figdata.shape[0] / 2), int(self.figdata.shape[0] / 2)]
-        print(ps.level)
-        self.updating = False
+        #print(ps.level)
+        #self.updating = False
+
+        self.update_event.set()
 
     def move(self, exdir):
         deg = self.ete.get_deg() + exdir
@@ -206,16 +210,24 @@ class key_animation:
         prev = 0
         plt.imshow(self.figdata, cmap="magma_r")
         while self.drawing:
+            plt.pause(.1)
+            self.update_event.wait()
+            self.update_event.clear()
+            self.ax.clear()
+            self.ax.imshow(self.figdata, cmap="magma_r")
+
+"""        while self.drawing:
             #if (prev == self.figdata).all():
             #    plt.pause(.5)
             #    continue
             if self.updating:
-                plt.pause(.1)
+                plt.pause(1)
                 continue
             self.ax.clear()
             self.ax.imshow(self.figdata, cmap="magma_r")
             plt.pause(1)
             #prev = self.figdata
+"""
 
 # オーディオプレーヤー
 class play_sound:
@@ -228,7 +240,7 @@ class play_sound:
         def generate_tone(self, frequency, length, rate):
             length = int(length * rate)
             factor = float(frequency) * (np.pi * 2) / rate
-            print(length, factor, length * factor / (np.pi))
+            #print(length, factor, length * factor / (np.pi))
             return np.sin(np.arange(length) * factor)
 
         def generate_tone_ver2(self, rate = 44100):
@@ -251,7 +263,6 @@ class play_sound:
                 chunks.append(self.generate_tone(freq, 0.5, 44100))
                 #chunks.append(self.generate_tone_ver2())
                 chunk = np.concatenate(chunks) * 0.1
-                print(chunk[len(chunk)-1])
                 self.stream.write(chunk.astype(np.float32).tostring())
                 sleep(0.5)
 
