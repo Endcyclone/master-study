@@ -153,6 +153,7 @@ def on_press(key):
         if key.char == "a" : ka.move(-90)
         if key.char == "s" : ka.move(180)
         if key.char == "d" : ka.move(90)
+        if key.char == "c" : ka.savecsv()
     except AttributeError:
         if key == Key.up: ka.lookUp()
         if key == Key.down: ka.lookDown()
@@ -215,19 +216,12 @@ class key_animation:
             self.update_event.clear()
             self.ax.clear()
             self.ax.imshow(self.figdata, cmap="magma_r")
-
-"""        while self.drawing:
-            #if (prev == self.figdata).all():
-            #    plt.pause(.5)
-            #    continue
-            if self.updating:
-                plt.pause(1)
-                continue
-            self.ax.clear()
-            self.ax.imshow(self.figdata, cmap="magma_r")
-            plt.pause(1)
-            #prev = self.figdata
-"""
+    def savecsv(self):
+        df = pd.DataFrame(self.figdata)
+        filename = str(self.step)+str(self.ete.get_pos())+str(self.ete.get_deg())+str(self.ete.get_ele())+".csv"
+        df.to_csv(filename)
+        print("saved.")
+        return
 
 # オーディオプレーヤー
 class play_sound:
